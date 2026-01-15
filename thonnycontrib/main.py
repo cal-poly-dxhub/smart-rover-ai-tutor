@@ -268,7 +268,9 @@ class MyDockView(ttk.Frame):
                         cwd=self.cwd,
                         timeout=30
                     )
-                    
+                    # If reset button was pressed during execution, skip output
+                    if self.is_first_kiro_command and not self.is_executing:
+                        return
                     # Schedule UI updates on main thread
                     self.terminal.after(0, lambda: self._handle_command_result(result))
                 except subprocess.TimeoutExpired:
