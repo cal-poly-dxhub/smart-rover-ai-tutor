@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./hack/spec_metadata.sh)",
+      "Bash(hack/spec_metadata.sh)",
+      "Bash(bash hack/spec_metadata.sh)",
+      "WebSearch",
+      "WebFetch"
+
+    ]
+  },
+  "enableAllProjectMcpServers": false,
+  "env": {
+    "MAX_THINKING_TOKENS": "32000",
+    "CLAUDE_CODE_USE_BEDROCK": "1",
+    "AWS_PROFILE": "smartfactory-admin",
+    "AWS_SDK_LOAD_CONFIG": "1",
+    "AWS_REGION": "us-west-2",
+    "AWS_DEFAULT_REGION": "us-east-1"
+  },
+  "awsAuthRefresh": "aws sso login --profile smartfactory-admin"
+}
