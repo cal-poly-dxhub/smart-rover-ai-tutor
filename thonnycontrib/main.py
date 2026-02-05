@@ -42,26 +42,49 @@ class MyDockView(ttk.Frame):
         terminal_frame = ttk.Frame(self)
         terminal_frame.pack(side="top", fill="both", expand=True, padx=10, pady=(0, 10))
 
+        # Configure scrollbar style for better visibility against dark background
+        style = ttk.Style()
+        # Use a style that works with dark backgrounds
+        # Try to configure the scrollbar with lighter colors
+        try:
+            # Create a custom style for this scrollbar
+            style.configure("Kiro.Vertical.TScrollbar",
+                           troughcolor="#2b2b2b",  # Dark gray trough
+                           background="#5a5a5a",    # Medium gray thumb
+                           bordercolor="#3a3a3a",   # Slightly lighter border
+                           arrowcolor="#ffffff")    # White arrows
+            style.map("Kiro.Vertical.TScrollbar",
+                     background=[("active", "#7a7a7a")])  # Lighter on hover
+        except:
+            # If styling fails, continue with default
+            pass
+
+        # Scrollbar (pack BEFORE terminal to ensure it gets space)
+        self.scrollbar = ttk.Scrollbar(terminal_frame, orient="vertical", style="Kiro.Vertical.TScrollbar")
+        self.scrollbar.pack(side="right", fill="y")
+
         # Terminal display/input
-        self.terminal = tk.Text(terminal_frame, wrap="word", 
+        self.terminal = tk.Text(terminal_frame, wrap="word",
                                bg="black", fg="white", font=("Consolas", 10),
-                               insertbackground="white")
+                               insertbackground="white",
+                               yscrollcommand=self.scrollbar.set,
+                               height=20,  # Set explicit height to ensure scrollbar shows
+                               relief="flat",  # Remove border for cleaner look
+                               borderwidth=0)
         self.terminal.pack(side="left", fill="both", expand=True)
-        
+
+        # Link scrollbar to terminal
+        self.scrollbar.config(command=self.terminal.yview)
+
         # Initialize ANSI color handler
         self.ansi_handler = AnsiColorHandler(self.terminal)
-        
+
         # Initialize loading animation
         self.loading_animation = LoadingAnimation(
             self.terminal,
             self._write_output,
             self._get_prompt_symbol
         )
-
-        # Scrollbar
-        scrollbar = ttk.Scrollbar(terminal_frame, command=self.terminal.yview)
-        scrollbar.pack(side="right", fill="y")
-        self.terminal.config(yscrollcommand=scrollbar.set)
 
         # Bind key events
         self.terminal.bind("<Return>", self._on_enter_key)

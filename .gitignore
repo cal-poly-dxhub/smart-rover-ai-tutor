@@ -1,2 +1,4 @@
 # Build and distribution
 *.egg-info/
+*.kiro
+
