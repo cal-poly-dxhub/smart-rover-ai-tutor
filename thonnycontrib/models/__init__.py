@@ -3,7 +3,3 @@
 from thonnycontrib.models.command import Command, CommandResult
 
 __all__ = ["Command", "CommandResult"]
-
-from thonnycontrib.models.command import Command, CommandResult
-
-__all__ = ["Command", "CommandResult"]
