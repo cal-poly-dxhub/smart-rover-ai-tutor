@@ -12,9 +12,6 @@ class KiroDockView(ttk.Frame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.terminal_widget = None
-        self.controller = None
-
         self._setup_ui()
         self._initialize_controller()
         self._show_welcome_message()
