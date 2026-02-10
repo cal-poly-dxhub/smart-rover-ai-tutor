@@ -3,9 +3,9 @@
 import tkinter as tk
 from tkinter import ttk
 from typing import Callable, Optional
-from thonnycontrib.utils.ansi_handler import AnsiColorHandler
-from thonnycontrib.utils.loading_animation import LoadingAnimation
-from thonnycontrib.config.settings import TerminalConfig, AnsiColorConfig
+from thonnycontrib.smart_rover.utils.ansi_handler import AnsiColorHandler
+from thonnycontrib.smart_rover.utils.loading_animation import LoadingAnimation
+from thonnycontrib.smart_rover.config.settings import TerminalConfig, AnsiColorConfig
 
 
 class TerminalWidget(ttk.Frame):

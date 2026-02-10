@@ -3,8 +3,8 @@
 import subprocess
 import threading
 from typing import Callable
-from thonnycontrib.models.command import Command, CommandResult
-from thonnycontrib.config.settings import ExecutionConfig
+from thonnycontrib.smart_rover.models.command import Command, CommandResult
+from thonnycontrib.smart_rover.config.settings import ExecutionConfig
 
 
 class CommandExecutor:

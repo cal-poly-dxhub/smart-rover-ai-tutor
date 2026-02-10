@@ -2,7 +2,7 @@
 
 import os
 from typing import Optional, Callable
-from thonnycontrib.models.command import Command, CommandResult
+from thonnycontrib.smart_rover.models.command import Command, CommandResult
 
 
 class BuiltinCommandHandler:

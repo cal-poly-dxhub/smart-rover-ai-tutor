@@ -1,9 +1,9 @@
 """Main dock view for the Kiro plugin."""
 
 from tkinter import ttk
-from thonnycontrib.gui.terminal_widget import TerminalWidget
-from thonnycontrib.console.terminal_controller import TerminalController
-from thonnycontrib.config.settings import UIConfig
+from thonnycontrib.smart_rover.gui.terminal_widget import TerminalWidget
+from thonnycontrib.smart_rover.console.terminal_controller import TerminalController
+from thonnycontrib.smart_rover.config.settings import UIConfig
 
 
 class KiroDockView(ttk.Frame):

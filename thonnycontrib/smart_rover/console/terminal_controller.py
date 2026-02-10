@@ -2,10 +2,10 @@
 
 import os
 from typing import Callable, Optional
-from thonnycontrib.models.command import Command, CommandResult
-from thonnycontrib.console.command_executor import CommandExecutor
-from thonnycontrib.console.command_history import CommandHistory
-from thonnycontrib.console.builtin_commands import BuiltinCommandHandler
+from thonnycontrib.smart_rover.models.command import Command, CommandResult
+from thonnycontrib.smart_rover.console.command_executor import CommandExecutor
+from thonnycontrib.smart_rover.console.command_history import CommandHistory
+from thonnycontrib.smart_rover.console.builtin_commands import BuiltinCommandHandler
 
 
 class TerminalController:
