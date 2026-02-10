@@ -1,4 +1,5 @@
 # Build and distribution
 *.egg-info/
 *.kiro
+*__pycache__
 

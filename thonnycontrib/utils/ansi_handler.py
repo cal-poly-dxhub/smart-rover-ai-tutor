@@ -1,82 +1,75 @@
 """ANSI color code handler for terminal display."""
 
 import re
+from thonnycontrib.config.settings import AnsiColorConfig
 
 
 class AnsiColorHandler:
     """Handles ANSI color codes and formatting for terminal display."""
-    
+
     def __init__(self, text_widget):
         """
         Initialize the ANSI color handler.
-        
+
         Args:
             text_widget: tkinter Text widget to apply formatting to
         """
         self.text_widget = text_widget
         self.ansi_colors = self._create_color_palette()
         self._setup_color_tags()
-    
+
     def _create_color_palette(self):
-        """Create the ANSI 256-color palette."""
-        colors = {
-            # Standard 16 colors
-            0: "#000000", 1: "#800000", 2: "#008000", 3: "#808000",
-            4: "#000080", 5: "#800080", 6: "#008080", 7: "#c0c0c0",
-            8: "#808080", 9: "#ff0000", 10: "#00ff00", 11: "#ffff00",
-            12: "#0000ff", 13: "#ff00ff", 14: "#00ffff", 15: "#ffffff",
-            # Extended colors (key ones used by kiro-cli)
-            141: "#af87ff",  # Purple/magenta
-            244: "#808080",  # Gray
-            252: "#d0d0d0",  # Light gray
-        }
+        """Create the ANSI 256-color palette from configuration."""
+        colors = {}
+        colors.update(AnsiColorConfig.STANDARD_COLORS)
+        colors.update(AnsiColorConfig.EXTENDED_COLORS)
         return colors
-    
+
     def _setup_color_tags(self):
         """Setup text tags for ANSI colors in the text widget."""
         for code, color in self.ansi_colors.items():
             self.text_widget.tag_config(f"fg{code}", foreground=color)
             self.text_widget.tag_config(f"bg{code}", background=color)
-    
+
     def write_text(self, text):
         """
         Write text to the widget, interpreting ANSI color codes.
-        
+
         Args:
             text: Text with ANSI escape sequences
         """
         # Pattern to match ANSI color escape sequences
         ansi_pattern = re.compile(r'\x1B\[([0-9;]+)m')
-        
+
         # Track current formatting state
         current_fg = None
         current_bg = None
-        
+
         last_end = 0
         for match in ansi_pattern.finditer(text):
             # Write any text before this escape code
             if match.start() > last_end:
                 plain_text = text[last_end:match.start()]
                 plain_text = self._clean_control_codes(plain_text)
-                
+
                 if plain_text:
                     self._insert_text(plain_text, current_fg, current_bg)
-            
+
             # Parse and update formatting state
             current_fg, current_bg = self._parse_ansi_code(
                 match.group(1), current_fg, current_bg
             )
-            
+
             last_end = match.end()
-        
+
         # Write remaining text after last escape code
         if last_end < len(text):
             plain_text = text[last_end:]
             plain_text = self._clean_control_codes(plain_text)
-            
+
             if plain_text:
                 self._insert_text(plain_text, current_fg, current_bg)
-    
+
     def _clean_control_codes(self, text):
         """Remove cursor control codes but keep printable characters."""
         # Remove cursor movement and control sequences (but not color codes)
@@ -84,25 +77,25 @@ class AnsiColorHandler:
         # Remove other control characters except newline, tab, carriage return
         text = re.sub(r'[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]', '', text)
         return text
-    
+
     def _parse_ansi_code(self, code_str, current_fg, current_bg):
         """
         Parse ANSI color code and return updated foreground/background colors.
-        
+
         Args:
             code_str: String containing semicolon-separated ANSI codes
             current_fg: Current foreground color code
             current_bg: Current background color code
-            
+
         Returns:
             Tuple of (new_fg, new_bg)
         """
         codes = code_str.split(';')
         i = 0
-        
+
         while i < len(codes):
             code = codes[i]
-            
+
             if code == '0':  # Reset all formatting
                 current_fg = None
                 current_bg = None
@@ -124,15 +117,15 @@ class AnsiColorHandler:
                     current_fg = code_int - 90 + 8
                 elif 100 <= code_int <= 107:  # Bright background color
                     current_bg = code_int - 100 + 8
-            
+
             i += 1
-        
+
         return current_fg, current_bg
-    
+
     def _insert_text(self, text, fg_color, bg_color):
         """
         Insert text with specified colors.
-        
+
         Args:
             text: Text to insert
             fg_color: Foreground color code (or None)
@@ -143,7 +136,7 @@ class AnsiColorHandler:
             tags.append(f"fg{fg_color}")
         if bg_color is not None and bg_color in self.ansi_colors:
             tags.append(f"bg{bg_color}")
-        
+
         if tags:
             self.text_widget.insert("end", text, tuple(tags))
         else:
