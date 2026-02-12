@@ -20,7 +20,15 @@ class CommandExecutor:
         return self._is_executing
 
     def execute(self, command: Command, callback: Callable[[CommandResult], None]) -> None:
-        """Execute a command asynchronously."""
+        """Execute a raw command asynchronously.
+
+        This is the generic subprocess executor that can run any command.
+        Use execute_chat() for commands that should go through kiro-cli chat.
+
+        Args:
+            command: Command object with text and working_directory
+            callback: Function to call with CommandResult when complete
+        """
         if self._is_executing:
             callback(CommandResult(
                 success=False,
@@ -30,15 +38,10 @@ class CommandExecutor:
 
         self._is_executing = True
 
-        if command.is_first:
-            kiro_command = f'kiro-cli chat --no-interactive "{command.text}"'
-        else:
-            kiro_command = f'kiro-cli chat --no-interactive --resume "{command.text}"'
-
         def run_command():
             try:
                 result = subprocess.run(
-                    kiro_command,
+                    command.text,
                     shell=True,
                     executable=ExecutionConfig.SHELL_EXECUTABLE,
                     capture_output=True,
@@ -70,3 +73,27 @@ class CommandExecutor:
                 self._is_executing = False
 
         threading.Thread(target=run_command, daemon=True).start()
+
+    def execute_chat(self, command: Command, callback: Callable[[CommandResult], None]) -> None:
+        """Execute a command through kiro-cli chat interface.
+
+        Wraps the user's command in 'kiro-cli chat --no-interactive' and
+        optionally adds --resume for subsequent commands in a conversation.
+
+        Args:
+            command: Command object with text, is_first flag, and working_directory
+            callback: Function to call with CommandResult when complete
+        """
+        if command.is_first:
+            kiro_command = f'kiro-cli chat --no-interactive "{command.text}"'
+        else:
+            kiro_command = f'kiro-cli chat --no-interactive --resume "{command.text}"'
+
+        # Create a new Command object with the wrapped kiro-cli command
+        wrapped_command = Command(
+            text=kiro_command,
+            working_directory=command.working_directory
+        )
+
+        # Delegate to generic execute() method
+        self.execute(wrapped_command, callback)

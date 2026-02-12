@@ -71,7 +71,7 @@ class TerminalController:
 
         self._is_first_command = False
         self._animation_start()
-        self._executor.execute(command, self._handle_external_result)
+        self._executor.execute_chat(command, self._handle_external_result)
 
     def _handle_clear_command(self) -> None:
         """Handle the clear command."""
