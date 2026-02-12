@@ -72,7 +72,8 @@ class KiroDockView(ttk.Frame):
             on_command_callback=self._on_command_entered,
             on_history_up_callback=self._on_history_up,
             on_history_down_callback=self._on_history_down,
-            is_executing_callback=lambda: self.controller.is_executing if self.controller else False
+            is_executing_callback=lambda: self.controller.is_executing if self.controller else False,
+            is_logged_in_callback=lambda: self.controller.is_logged_in if self.controller else False
         )
         self.terminal_widget.pack(fill="both", expand=True)
 

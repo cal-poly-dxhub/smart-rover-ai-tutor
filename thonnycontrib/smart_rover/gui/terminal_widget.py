@@ -16,6 +16,7 @@ class TerminalWidget(ttk.Frame):
                  on_history_up_callback: Callable[[], Optional[str]],
                  on_history_down_callback: Callable[[], Optional[str]],
                  is_executing_callback: Callable[[], bool],
+                 is_logged_in_callback: Callable[[], bool],
                  **kwargs):
         """Initialize the terminal widget."""
         super().__init__(master, **kwargs)
@@ -24,6 +25,7 @@ class TerminalWidget(ttk.Frame):
         self._on_history_up = on_history_up_callback
         self._on_history_down = on_history_down_callback
         self._is_executing = is_executing_callback
+        self._is_logged_in = is_logged_in_callback
 
         self._setup_ui()
         self._setup_handlers()
@@ -119,7 +121,8 @@ class TerminalWidget(ttk.Frame):
 
     def _on_key_press(self, event):
         """Prevent editing of output."""
-        if self._is_executing():
+        # Block input if executing or not logged in
+        if self._is_executing() or not self._is_logged_in():
             return "break"
 
         if event.keysym in ["Up", "Down", "Left", "Right", "Home", "End", "Control_L", "Control_R"]:
@@ -150,7 +153,8 @@ class TerminalWidget(ttk.Frame):
 
     def _on_enter_key(self, event):
         """Handle Enter key press."""
-        if self._is_executing():
+        # Block Enter if executing or not logged in
+        if self._is_executing() or not self._is_logged_in():
             return "break"
 
         command = self.get_current_command().strip()
@@ -161,7 +165,8 @@ class TerminalWidget(ttk.Frame):
 
     def _on_up_key(self, event):
         """Navigate to previous command."""
-        if self._is_executing():
+        # Block history navigation if executing or not logged in
+        if self._is_executing() or not self._is_logged_in():
             return "break"
 
         prev_command = self._on_history_up()
@@ -173,7 +178,8 @@ class TerminalWidget(ttk.Frame):
 
     def _on_down_key(self, event):
         """Navigate to next command."""
-        if self._is_executing():
+        # Block history navigation if executing or not logged in
+        if self._is_executing() or not self._is_logged_in():
             return "break"
 
         next_command = self._on_history_down()

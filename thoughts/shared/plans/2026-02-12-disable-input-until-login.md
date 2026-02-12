@@ -200,8 +200,8 @@ if self._is_executing() or not self._is_logged_in():
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Python syntax is valid: `python -m py_compile thonnycontrib/smart_rover/gui/terminal_widget.py`
-- [ ] No import errors when loading module: `python -c "from thonnycontrib.smart_rover.gui.terminal_widget import TerminalWidget; print('Success')"`
+- [x] Python syntax is valid: `python -m py_compile thonnycontrib/smart_rover/gui/terminal_widget.py`
+- [x] No import errors when loading module: `python -c "from thonnycontrib.smart_rover.gui.terminal_widget import TerminalWidget; print('Success')"`
 
 #### Manual Verification:
 - [ ] TerminalWidget can be instantiated with new parameter
@@ -256,8 +256,8 @@ self.terminal_widget = TerminalWidget(
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Python syntax is valid: `python -m py_compile thonnycontrib/smart_rover/gui/dock_view.py`
-- [ ] No import errors: `python -c "from thonnycontrib.smart_rover.gui.dock_view import KiroDockView; print('Success')"`
+- [x] Python syntax is valid: `python -m py_compile thonnycontrib/smart_rover/gui/dock_view.py`
+- [x] No import errors: `python -c "from thonnycontrib.smart_rover.gui.dock_view import KiroDockView; print('Success')"`
 - [ ] Plugin loads in Thonny without errors
 
 #### Manual Verification:
