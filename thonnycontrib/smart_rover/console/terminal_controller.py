@@ -32,6 +32,8 @@ class TerminalController:
 
         self._cwd = os.getcwd()
         self._is_first_command = True
+        self._is_logged_in = False
+        self._auth_state_callback = None
 
     @property
     def working_directory(self) -> str:
@@ -42,6 +44,16 @@ class TerminalController:
     def is_executing(self) -> bool:
         """Check if a command is currently executing."""
         return self._executor.is_executing
+
+    @property
+    def is_logged_in(self) -> bool:
+        """Check if user is logged in to kiro-cli."""
+        return self._is_logged_in
+
+    @property
+    def auth_button_enabled(self) -> bool:
+        """Check if auth button should be enabled."""
+        return not self._executor.is_executing
 
     def execute_command(self, command_text: str) -> None:
         """Execute a command."""
@@ -123,3 +135,54 @@ class TerminalController:
     def get_next_command(self) -> Optional[str]:
         """Get the next command from history."""
         return self.history.get_next()
+
+    def set_auth_state_callback(self, callback: Callable[[bool], None]) -> None:
+        """Set callback for authentication state changes."""
+        self._auth_state_callback = callback
+
+    def check_login_status(self, callback: Callable[[bool], None]) -> None:
+        """Check if user is logged in by running kiro-cli login."""
+        def handle_result(result: CommandResult):
+            # If output contains "error", user is already logged in
+            is_logged_in = "error" in result.stdout.lower() or "error" in result.stderr.lower()
+            self._is_logged_in = is_logged_in
+            callback(is_logged_in)
+
+        # Use execute() with a Command object for raw kiro-cli login command
+        login_command = Command(
+            text="kiro-cli login",
+            working_directory=self._cwd
+        )
+        self._executor.execute(login_command, handle_result)
+
+    def login(self) -> None:
+        """Execute kiro-cli login command."""
+        def handle_result(result: CommandResult):
+            # After login attempt, update state
+            # If no error, login was successful or already logged in
+            is_logged_in = "error" not in result.stdout.lower() and "error" not in result.stderr.lower()
+            self._is_logged_in = is_logged_in
+            if self._auth_state_callback:
+                self._auth_state_callback(is_logged_in)
+
+        # Use execute() with a Command object for raw kiro-cli login command
+        login_command = Command(
+            text="kiro-cli login",
+            working_directory=self._cwd
+        )
+        self._executor.execute(login_command, handle_result)
+
+    def logout(self) -> None:
+        """Execute kiro-cli logout command."""
+        def handle_result(result: CommandResult):
+            # After logout, user should not be logged in
+            self._is_logged_in = False
+            if self._auth_state_callback:
+                self._auth_state_callback(False)
+
+        # Use execute() with a Command object for raw kiro-cli logout command
+        logout_command = Command(
+            text="kiro-cli logout",
+            working_directory=self._cwd
+        )
+        self._executor.execute(logout_command, handle_result)
