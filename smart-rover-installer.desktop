@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Smart Rover AI Tutor Installer
+Comment=Install Smart Rover AI Tutor plugin for Thonny IDE
+Exec=bash -c 'DIR="$(dirname "$(realpath "$1" 2>/dev/null || readlink -f "$1" 2>/dev/null || echo "$1")")/smart-rover-ai-tutor"; echo "Directory: $DIR"; cd "$DIR" || exit 1; chmod +x install.sh 2>/dev/null; if [ -f install.sh ]; then bash install.sh; else echo "Error: install.sh not found in $DIR"; fi; echo ""; read -p "Press Enter to close..."' _ %k
+Icon=utilities-terminal
+Terminal=true
+Categories=Development;Education;

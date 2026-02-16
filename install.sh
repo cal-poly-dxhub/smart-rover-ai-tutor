@@ -158,7 +158,31 @@ copy_thonnycontrib() {
     print_step "Copying thonnycontrib plugin..."
 
     SOURCE_DIR="$SCRIPT_DIR/thonnycontrib"
-    DEST_DIR="$HOME/.config/Thonny/plugins/lib/python3.13/site-packages/thonnycontrib"
+
+    # Detect Python version used by Thonny (check from highest to lowest)
+    PYTHON_VERSION=""
+    THONNY_LIB_DIR="$HOME/.config/Thonny/plugins/lib"
+
+    print_step "Detecting Python version in Thonny plugins directory..."
+
+    # Check versions from 3.15 down to 3.7
+    for version in 3.15 3.14 3.13 3.12 3.11 3.10 3.9 3.8 3.7; do
+        if [[ -d "$THONNY_LIB_DIR/python$version" ]]; then
+            PYTHON_VERSION="$version"
+            print_success "Detected Python $PYTHON_VERSION in Thonny plugins"
+            break
+        fi
+    done
+
+    # Fallback to default version if none found
+    if [[ -z "$PYTHON_VERSION" ]]; then
+        PYTHON_VERSION="3.13"
+        print_warning "No Python version detected in Thonny plugins, using default: $PYTHON_VERSION"
+        print_warning "Directory will be created at installation time"
+    fi
+
+    # Construct destination path with detected version
+    DEST_DIR="$HOME/.config/Thonny/plugins/lib/python$PYTHON_VERSION/site-packages/thonnycontrib"
 
     # Check source directory exists
     if [[ ! -d "$SOURCE_DIR" ]]; then
@@ -249,6 +273,8 @@ main() {
         echo "You can re-run this script after resolving the errors."
     fi
 
+    echo ""
+    read -p "Press Enter to close this window..."
     exit $EXIT_CODE
 }
 
