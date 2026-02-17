@@ -87,13 +87,13 @@ uninstall_kiro_cli() {
         return 1
     fi
 
-    # Uninstall package
-    print_step "Removing kiro-cli package..."
-    if sudo dpkg -r kiro-cli >/dev/null 2>&1; then
-        print_success "kiro-cli package removed"
+    # Uninstall package using kiro-cli uninstall command
+    print_step "Running kiro-cli uninstall..."
+    if kiro-cli uninstall >/dev/null 2>&1; then
+        print_success "kiro-cli uninstall completed"
     else
-        print_error "Failed to remove kiro-cli package"
-        print_warning "Try manually: sudo dpkg -r kiro-cli"
+        print_error "Failed to run kiro-cli uninstall"
+        print_warning "Try manually: kiro-cli uninstall"
         return 1
     fi
 
