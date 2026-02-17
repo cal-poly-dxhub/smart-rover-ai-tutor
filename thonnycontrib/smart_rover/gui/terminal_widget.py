@@ -46,7 +46,9 @@ class TerminalWidget(ttk.Frame):
             yscrollcommand=self.scrollbar.set,
             height=TerminalConfig.HEIGHT,
             relief=TerminalConfig.RELIEF,
-            borderwidth=TerminalConfig.BORDER_WIDTH
+            borderwidth=TerminalConfig.BORDER_WIDTH,
+            padx=TerminalConfig.TEXT_PADDING_X,
+            pady=TerminalConfig.TEXT_PADDING_Y
         )
         self.terminal.pack(side="left", fill="both", expand=True)
 
