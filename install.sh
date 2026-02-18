@@ -58,6 +58,30 @@ check_debian() {
     fi
 }
 
+# Step 2b: Check required tools for installation
+check_prerequisites() {
+    print_step "Checking required tools..."
+
+    MISSING_TOOLS=()
+
+    if ! command -v curl >/dev/null 2>&1; then
+        MISSING_TOOLS+=("curl")
+    fi
+
+    if ! command -v unzip >/dev/null 2>&1; then
+        MISSING_TOOLS+=("unzip")
+    fi
+
+    if [ ${#MISSING_TOOLS[@]} -eq 0 ]; then
+        print_success "All required tools are available (curl, unzip)"
+        return 0
+    else
+        print_error "Missing required tools: ${MISSING_TOOLS[*]}"
+        print_error "Install with: sudo apt-get install ${MISSING_TOOLS[*]}"
+        return 1
+    fi
+}
+
 # Step 3: Install or update kiro-cli
 install_kiro_cli() {
     print_step "Installing kiro-cli..."
@@ -72,36 +96,74 @@ install_kiro_cli() {
         print_step "Updating to latest version..."
     fi
 
-    # Download .deb package
-    print_step "Downloading kiro-cli.deb..."
-    TEMP_DEB=$(mktemp)
-    if wget -q --show-progress https://desktop-release.q.us-east-1.amazonaws.com/latest/kiro-cli.deb -O "$TEMP_DEB"; then
-        print_success "Downloaded kiro-cli.deb"
+    # Create temporary directory for download and extraction
+    TEMP_DIR=$(mktemp -d)
+    TEMP_ZIP="$TEMP_DIR/kirocli.zip"
+
+    # Set up cleanup trap
+    trap 'rm -rf "$TEMP_DIR"' EXIT INT TERM
+
+    # Download zip package (musl build for maximum compatibility)
+    print_step "Downloading kirocli-aarch64-linux-musl.zip..."
+    if curl --proto '=https' --tlsv1.2 -sSf \
+        'https://desktop-release.q.us-east-1.amazonaws.com/latest/kirocli-aarch64-linux-musl.zip' \
+        -o "$TEMP_ZIP"; then
+        print_success "Downloaded kirocli-aarch64-linux-musl.zip"
     else
-        print_error "Failed to download kiro-cli.deb"
-        rm -f "$TEMP_DEB"
+        print_error "Failed to download kirocli-aarch64-linux-musl.zip"
+        rm -rf "$TEMP_DIR"
         return 1
     fi
 
-    # Install package
-    print_step "Installing kiro-cli package..."
-    if sudo dpkg -i "$TEMP_DEB" 2>/dev/null; then
-        print_success "kiro-cli package installed"
+    # Extract zip file
+    print_step "Extracting kirocli package..."
+    if unzip -q "$TEMP_ZIP" -d "$TEMP_DIR"; then
+        print_success "Extracted kirocli package"
     else
-        print_warning "dpkg reported errors, attempting to fix dependencies..."
-        if sudo apt-get install -f -y >/dev/null 2>&1; then
-            print_success "Dependencies fixed, kiro-cli installed"
-        else
-            print_error "Failed to install kiro-cli"
-            rm -f "$TEMP_DEB"
-            return 1
-        fi
+        print_error "Failed to extract kirocli package"
+        rm -rf "$TEMP_DIR"
+        return 1
     fi
 
-    # Clean up
-    rm -f "$TEMP_DEB"
+    # Verify extracted directory exists
+    if [[ ! -d "$TEMP_DIR/kirocli" ]] || [[ ! -f "$TEMP_DIR/kirocli/install.sh" ]]; then
+        print_error "Expected kirocli/install.sh not found in extracted package"
+        rm -rf "$TEMP_DIR"
+        return 1
+    fi
+
+    # Run installation script
+    print_step "Running kirocli installation script..."
+    cd "$TEMP_DIR/kirocli" || {
+        print_error "Failed to change to kirocli directory"
+        rm -rf "$TEMP_DIR"
+        return 1
+    }
+
+    # Make install.sh executable and run it
+    chmod +x install.sh
+    echo ""
+    if ./install.sh; then
+        echo ""
+        print_success "kirocli installation script completed"
+    else
+        echo ""
+        print_error "kirocli installation script failed"
+        cd "$SCRIPT_DIR"
+        rm -rf "$TEMP_DIR"
+        return 1
+    fi
+
+    # Return to original directory
+    cd "$SCRIPT_DIR"
+
+    # Clean up temporary directory
+    rm -rf "$TEMP_DIR"
 
     # Verify installation
+    # The kirocli installer adds ~/.local/bin to PATH in shell configs
+    export PATH="$HOME/.local/bin:$PATH"
+
     if command -v kiro-cli >/dev/null 2>&1; then
         NEW_VERSION=$(kiro-cli --version 2>/dev/null || echo "installed")
         if [[ "$IS_INSTALLED" == true ]]; then
@@ -113,9 +175,14 @@ install_kiro_cli() {
         else
             print_success "kiro-cli successfully installed (version: $NEW_VERSION)"
         fi
+
+        print_warning "Note: You may need to restart your terminal or run 'source ~/.bashrc' for kiro-cli to be available"
+
         return 0
     else
         print_error "kiro-cli installation verification failed"
+        print_warning "The installer may have succeeded but kiro-cli is not in PATH yet"
+        print_warning "Try: export PATH=\"\$HOME/.local/bin:\$PATH\" or restart your terminal"
         return 1
     fi
 }
@@ -248,6 +315,7 @@ main() {
 
     check_architecture
     check_debian
+    check_prerequisites
     install_kiro_cli
     copy_steering
     copy_thonnycontrib

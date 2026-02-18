@@ -30,6 +30,13 @@ The installer will:
 3. Click **Login** to authenticate with kiro-cli
 4. Start using the Smart Rover AI Tutor!
 
+### Installation Notes
+
+- kiro-cli is installed to `~/.local/bin/`
+- You may need to restart your terminal or run `source ~/.bashrc` after installation
+- The installer requires `curl` and `unzip` commands (install via: `sudo apt-get install curl unzip`)
+- The installer uses the musl build for maximum compatibility across all systems
+
 ## Uninstallation
 
 To completely remove Smart Rover AI Tutor from your system:
@@ -50,7 +57,7 @@ Double-click the `smart-rover-uninstaller.desktop` file and follow the prompts.
 ### What Gets Removed
 
 The uninstaller removes:
-- **kiro-cli package**: Complete removal via dpkg
+- **kiro-cli binary**: Complete removal from ~/.local/bin/
 - **Configuration directory**: `~/.kiro/` including credentials, settings, and conversation history
 - **Thonny plugin**: All Python version installations in `~/.config/Thonny/plugins/`
 - **Empty directories**: Cleanup of empty parent directories
@@ -65,8 +72,10 @@ sudo apt remove thonny
 If the script doesn't work or you prefer manual removal:
 
 ```bash
-# Remove kiro-cli package
-sudo dpkg -r kiro-cli
+# Remove kiro-cli
+kiro-cli uninstall
+# Or manually:
+rm -rf ~/.local/bin/kiro-cli
 
 # Remove configuration and data
 rm -rf ~/.kiro/

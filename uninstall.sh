@@ -58,17 +58,18 @@ check_architecture() {
 check_debian() {
     print_step "Checking for Debian-based system..."
     if command -v dpkg >/dev/null 2>&1; then
-        print_success "Debian package manager (dpkg) detected"
+        print_success "Debian-based system detected"
         return 0
     else
-        print_warning "dpkg not found. kiro-cli removal will be skipped."
+        print_warning "dpkg not found. This script is designed for Debian-based systems."
+        print_warning "Continuing anyway - uninstallation may still work."
         return 0
     fi
 }
 
-# Step 3: Uninstall kiro-cli package
+# Step 3: Uninstall kiro-cli
 uninstall_kiro_cli() {
-    print_step "Uninstalling kiro-cli package..."
+    print_step "Uninstalling kiro-cli..."
 
     # Check if kiro-cli is installed
     if ! command -v kiro-cli >/dev/null 2>&1; then
@@ -80,20 +81,17 @@ uninstall_kiro_cli() {
     CURRENT_VERSION=$(kiro-cli --version 2>/dev/null || echo "unknown")
     print_step "Found kiro-cli version: $CURRENT_VERSION"
 
-    # Check if package is installed via dpkg
-    if ! dpkg -l kiro-cli >/dev/null 2>&1; then
-        print_warning "kiro-cli command exists but package not found in dpkg"
-        print_warning "May have been installed manually - cannot remove automatically"
-        return 1
-    fi
-
-    # Uninstall package using kiro-cli uninstall command
+    # Uninstall using kiro-cli's built-in uninstall command
     print_step "Running kiro-cli uninstall..."
-    if kiro-cli uninstall >/dev/null 2>&1; then
+    echo ""
+    if kiro-cli uninstall; then
+        echo ""
         print_success "kiro-cli uninstall completed"
     else
+        echo ""
         print_error "Failed to run kiro-cli uninstall"
         print_warning "Try manually: kiro-cli uninstall"
+        print_warning "Or remove manually: rm -rf ~/.local/bin/kiro-cli"
         return 1
     fi
 
@@ -103,7 +101,8 @@ uninstall_kiro_cli() {
         return 0
     else
         print_warning "kiro-cli command still exists after removal"
-        print_warning "May be installed in multiple locations"
+        print_warning "May be installed in multiple locations or PATH not updated"
+        print_warning "Try: rm -rf ~/.local/bin/kiro-cli"
         return 1
     fi
 }
