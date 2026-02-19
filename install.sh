@@ -225,31 +225,7 @@ copy_thonnycontrib() {
     print_step "Copying thonnycontrib plugin..."
 
     SOURCE_DIR="$SCRIPT_DIR/thonnycontrib"
-
-    # Detect Python version used by Thonny (check from highest to lowest)
-    PYTHON_VERSION=""
     THONNY_LIB_DIR="$HOME/.config/Thonny/plugins/lib"
-
-    print_step "Detecting Python version in Thonny plugins directory..."
-
-    # Check versions from 3.15 down to 3.7
-    for version in 3.15 3.14 3.13 3.12 3.11 3.10 3.9 3.8 3.7; do
-        if [[ -d "$THONNY_LIB_DIR/python$version" ]]; then
-            PYTHON_VERSION="$version"
-            print_success "Detected Python $PYTHON_VERSION in Thonny plugins"
-            break
-        fi
-    done
-
-    # Fallback to default version if none found
-    if [[ -z "$PYTHON_VERSION" ]]; then
-        PYTHON_VERSION="3.13"
-        print_warning "No Python version detected in Thonny plugins, using default: $PYTHON_VERSION"
-        print_warning "Directory will be created at installation time"
-    fi
-
-    # Construct destination path with detected version
-    DEST_DIR="$HOME/.config/Thonny/plugins/lib/python$PYTHON_VERSION/site-packages/thonnycontrib"
 
     # Check source directory exists
     if [[ ! -d "$SOURCE_DIR" ]]; then
@@ -257,31 +233,101 @@ copy_thonnycontrib() {
         return 1
     fi
 
-    # Create parent directory if needed
-    mkdir -p "$(dirname "$DEST_DIR")"
+    # Initialize tracking variables
+    INSTALLED_COUNT=0
+    INSTALLED_VERSIONS=()
 
-    # Remove existing destination if it exists
-    if [[ -d "$DEST_DIR" ]]; then
-        print_warning "Removing existing thonnycontrib directory at: $DEST_DIR"
-        rm -rf "$DEST_DIR"
+    print_step "Detecting and installing to all Python versions in Thonny..."
+
+    # Install to all detected Python versions
+    for version in 3.15 3.14 3.13 3.12 3.11 3.10 3.9 3.8 3.7; do
+        VERSION_DIR="$THONNY_LIB_DIR/python$version"
+
+        # Check if this Python version's site-packages directory exists
+        if [[ -d "$VERSION_DIR/site-packages" ]]; then
+            DEST_DIR="$VERSION_DIR/site-packages/thonnycontrib"
+
+            print_step "Installing to Python $version..."
+
+            # Create parent directory if needed
+            mkdir -p "$(dirname "$DEST_DIR")"
+
+            # Remove existing destination if it exists
+            if [[ -d "$DEST_DIR" ]]; then
+                print_warning "Removing existing thonnycontrib for Python $version"
+                rm -rf "$DEST_DIR"
+            fi
+
+            # Copy directory
+            if cp -r "$SOURCE_DIR" "$DEST_DIR"; then
+                FILE_COUNT=$(find "$DEST_DIR" -type f -name "*.py" | wc -l)
+
+                # Verify key files exist
+                if [[ -f "$DEST_DIR/smart_rover/__init__.py" ]]; then
+                    print_success "Installed to Python $version ($FILE_COUNT .py files)"
+                    INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
+                    INSTALLED_VERSIONS+=("$version")
+                else
+                    print_error "Plugin entry point missing after copy to Python $version"
+                fi
+            else
+                print_error "Failed to copy to Python $version"
+            fi
+        fi
+    done
+
+    # Ensure Python 3.11 is always installed (even if directory didn't exist)
+    PYTHON_311_DIR="$THONNY_LIB_DIR/python3.11/site-packages"
+    PYTHON_311_DEST="$PYTHON_311_DIR/thonnycontrib"
+
+    # Check if we already installed to 3.11 in the loop above
+    ALREADY_INSTALLED_311=false
+    for installed_ver in "${INSTALLED_VERSIONS[@]}"; do
+        if [[ "$installed_ver" == "3.11" ]]; then
+            ALREADY_INSTALLED_311=true
+            break
+        fi
+    done
+
+    if [[ "$ALREADY_INSTALLED_311" == false ]]; then
+        print_step "Ensuring Python 3.11 installation (guaranteed)..."
+
+        # Create directory structure if it doesn't exist
+        mkdir -p "$PYTHON_311_DIR"
+
+        # Remove existing destination if it exists
+        if [[ -d "$PYTHON_311_DEST" ]]; then
+            print_warning "Removing existing thonnycontrib for Python 3.11"
+            rm -rf "$PYTHON_311_DEST"
+        fi
+
+        # Copy directory
+        if cp -r "$SOURCE_DIR" "$PYTHON_311_DEST"; then
+            FILE_COUNT=$(find "$PYTHON_311_DEST" -type f -name "*.py" | wc -l)
+
+            # Verify key files exist
+            if [[ -f "$PYTHON_311_DEST/smart_rover/__init__.py" ]]; then
+                print_success "Installed to Python 3.11 [guaranteed] ($FILE_COUNT .py files)"
+                INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
+                INSTALLED_VERSIONS+=("3.11")
+            else
+                print_error "Plugin entry point missing after copy to Python 3.11"
+            fi
+        else
+            print_error "Failed to copy to Python 3.11"
+        fi
     fi
 
-    # Copy directory
-    if cp -r "$SOURCE_DIR" "$DEST_DIR"; then
-        FILE_COUNT=$(find "$DEST_DIR" -type f -name "*.py" | wc -l)
-        print_success "Copied thonnycontrib package ($FILE_COUNT .py files) to: $DEST_DIR"
-
-        # Verify key files exist
-        if [[ -f "$DEST_DIR/smart_rover/__init__.py" ]]; then
-            print_success "Verified plugin entry point exists"
-            return 0
-        else
-            print_error "Plugin entry point not found after copy"
-            return 1
-        fi
-    else
-        print_error "Failed to copy thonnycontrib directory"
+    # Report installation results
+    if [[ $INSTALLED_COUNT -eq 0 ]]; then
+        print_error "Failed to install thonnycontrib to any Python version"
         return 1
+    elif [[ $INSTALLED_COUNT -eq 1 ]]; then
+        print_success "Installed thonnycontrib to 1 Python version: ${INSTALLED_VERSIONS[*]}"
+        return 0
+    else
+        print_success "Installed thonnycontrib to $INSTALLED_COUNT Python versions: ${INSTALLED_VERSIONS[*]}"
+        return 0
     fi
 }
 
@@ -309,7 +355,7 @@ configure_kiro_cli() {
 # Main installation flow
 main() {
     echo "╔════════════════════════════════════════════════════════════════╗"
-    echo "║  Smart Rover AI Tutor - Linux ARM64 Installation Script       ║"
+    echo "║  Smart Rover AI Tutor - Linux ARM64 Installation Script        ║"
     echo "╚════════════════════════════════════════════════════════════════╝"
     echo ""
 
