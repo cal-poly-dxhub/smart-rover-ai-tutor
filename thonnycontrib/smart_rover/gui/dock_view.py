@@ -89,16 +89,14 @@ class KiroDockView(ttk.Frame):
         )
         # Set auth state callback for button updates
         self.controller.set_auth_state_callback(self._on_auth_state_changed)
+        self.controller.logout()
 
     def _show_welcome_message(self):
         """Display the welcome message."""
         self.terminal_widget.write_output("Kiro Interactive CLI\n")
         self.terminal_widget.write_output(f"Working Directory: {self.controller.working_directory}\n")
         self.terminal_widget.write_output(UIConfig.SEPARATOR_LINE + "\n\n")
-        self.terminal_widget.show_prompt()
-
-        # Check authentication status and update button
-        self._check_initial_auth_state()
+        self.terminal_widget.show_prompt()        
 
     def _on_command_entered(self, command: str):
         """Handle command entered by user."""
@@ -141,10 +139,3 @@ class KiroDockView(ttk.Frame):
 
         button_state = "normal" if enabled else "disabled"
         self.auth_button.config(state=button_state)
-
-    def _check_initial_auth_state(self):
-        """Check initial authentication state and update button."""
-        def handle_initial_state(is_logged_in: bool):
-            self._update_auth_button_state(enabled=True, is_logged_in=is_logged_in)
-
-        self.controller.check_login_status(handle_initial_state)

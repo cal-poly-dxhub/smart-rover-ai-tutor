@@ -2,6 +2,7 @@
 
 import os
 from typing import Callable, Optional
+import webbrowser
 from thonnycontrib.smart_rover.models.command import Command, CommandResult
 from thonnycontrib.smart_rover.console.command_executor import CommandExecutor
 from thonnycontrib.smart_rover.console.command_history import CommandHistory
@@ -140,24 +141,10 @@ class TerminalController:
         """Set callback for authentication state changes."""
         self._auth_state_callback = callback
 
-    def check_login_status(self, callback: Callable[[bool], None]) -> None:
-        """Check if user is logged in by running kiro-cli login."""
-        def handle_result(result: CommandResult):
-            # If output contains "error", user is already logged in
-            is_logged_in = "error" in result.stdout.lower() or "error" in result.stderr.lower()
-            self._is_logged_in = is_logged_in
-            callback(is_logged_in)
-
-        # Use execute() with a Command object for raw kiro-cli login command
-        login_command = Command(
-            text="kiro-cli login",
-            working_directory=self._cwd
-        )
-        self._executor.execute(login_command, handle_result)
 
     def login(self) -> None:
         """Execute kiro-cli login command."""
-        def handle_login_result(result: CommandResult):
+        def handle_result(result: CommandResult):
             # After login attempt, update state
             # If no error, login was successful or already logged in
             is_logged_in = "error" not in result.stdout.lower() and "error" not in result.stderr.lower()
@@ -165,24 +152,18 @@ class TerminalController:
             if self._auth_state_callback:
                 self._auth_state_callback(is_logged_in)
 
-        def handle_browser_result(result: CommandResult):
-            # Browser command completed (success or failure)
-            # Now execute the actual login command
-            # We proceed with login even if browser failed to open
-            login_command = Command(
-                text="kiro-cli login",
-                working_directory=self._cwd
-            )
-            self._executor.execute(login_command, handle_login_result)
-
         # REMOVE when the bug for kiro-cli is fixed for this version of linux.
         # Kiro fails the login process when "kiro-cli login" opens a new browser window.
         # Therefore open a new window beforehand and wait for it to complete.
-        open_window_command = Command(
-            text="x-www-browser",
+        webbrowser.open("https://www.google.com")
+
+        login_command = Command(
+            text="kiro-cli login",
             working_directory=self._cwd
         )
-        self._executor.execute(open_window_command, handle_browser_result)
+        self._executor.execute(login_command, handle_result)
+
+
 
     def logout(self) -> None:
         """Execute kiro-cli logout command."""
