@@ -1,6 +1,6 @@
 """Loading animation for displaying while waiting for AI response."""
 
-from thonnycontrib.config.settings import AnimationConfig
+from thonnycontrib.smart_rover.config.settings import AnimationConfig
 
 
 class LoadingAnimation:

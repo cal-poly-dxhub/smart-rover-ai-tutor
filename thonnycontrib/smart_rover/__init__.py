@@ -1,7 +1,10 @@
+"""Smart Rover AI Tutor plugin for Thonny."""
+
+__version__ = "0.1.0"
 """Kiro plugin for Thonny IDE."""
 
 from thonny import get_workbench
-from thonnycontrib.gui.dock_view import KiroDockView
+from thonnycontrib.smart_rover.gui.dock_view import KiroDockView
 
 
 def load_plugin():

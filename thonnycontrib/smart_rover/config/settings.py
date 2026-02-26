@@ -10,6 +10,8 @@ class TerminalConfig:
     WRAP = "word"
     RELIEF = "flat"
     BORDER_WIDTH = 0
+    TEXT_PADDING_X = 10
+    TEXT_PADDING_Y = 10
 
 
 class AnimationConfig:
@@ -32,10 +34,10 @@ class UIConfig:
     HEADER_PADDING_X = 10
     HEADER_PADDING_Y = (10, 6)
     BUTTON_PADDING_X = 10
-    BUTTON_PADDING_Y = (0, 10)
-    TERMINAL_PADDING_X = 20
-    TERMINAL_PADDING_Y = (0, 10)
-    SEPARATOR_LINE = "=" * 60
+    BUTTON_PADDING_Y = (10, 10)
+    TERMINAL_PADDING_X = 10
+    TERMINAL_PADDING_Y = (0, 0)
+    SEPARATOR_LINE = "=" * 30
 
 
 class AnsiColorConfig:

@@ -1,7 +1,7 @@
 """ANSI color code handler for terminal display."""
 
 import re
-from thonnycontrib.config.settings import AnsiColorConfig
+from thonnycontrib.smart_rover.config.settings import AnsiColorConfig
 
 
 class AnsiColorHandler:

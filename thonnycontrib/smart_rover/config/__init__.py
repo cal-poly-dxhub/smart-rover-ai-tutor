@@ -1,6 +1,6 @@
 """Configuration for the Kiro plugin."""
 
-from thonnycontrib.config.settings import (
+from thonnycontrib.smart_rover.config.settings import (
     TerminalConfig,
     AnimationConfig,
     ExecutionConfig,

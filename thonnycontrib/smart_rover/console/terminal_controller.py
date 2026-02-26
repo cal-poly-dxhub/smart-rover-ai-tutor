@@ -2,10 +2,11 @@
 
 import os
 from typing import Callable, Optional
-from thonnycontrib.models.command import Command, CommandResult
-from thonnycontrib.console.command_executor import CommandExecutor
-from thonnycontrib.console.command_history import CommandHistory
-from thonnycontrib.console.builtin_commands import BuiltinCommandHandler
+import webbrowser
+from thonnycontrib.smart_rover.models.command import Command, CommandResult
+from thonnycontrib.smart_rover.console.command_executor import CommandExecutor
+from thonnycontrib.smart_rover.console.command_history import CommandHistory
+from thonnycontrib.smart_rover.console.builtin_commands import BuiltinCommandHandler
 
 
 class TerminalController:
@@ -32,6 +33,8 @@ class TerminalController:
 
         self._cwd = os.getcwd()
         self._is_first_command = True
+        self._is_logged_in = False
+        self._auth_state_callback = None
 
     @property
     def working_directory(self) -> str:
@@ -42,6 +45,16 @@ class TerminalController:
     def is_executing(self) -> bool:
         """Check if a command is currently executing."""
         return self._executor.is_executing
+
+    @property
+    def is_logged_in(self) -> bool:
+        """Check if user is logged in to kiro-cli."""
+        return self._is_logged_in
+
+    @property
+    def auth_button_enabled(self) -> bool:
+        """Check if auth button should be enabled."""
+        return not self._executor.is_executing
 
     def execute_command(self, command_text: str) -> None:
         """Execute a command."""
@@ -71,7 +84,7 @@ class TerminalController:
 
         self._is_first_command = False
         self._animation_start()
-        self._executor.execute(command, self._handle_external_result)
+        self._executor.execute_chat(command, self._handle_external_result)
 
     def _handle_clear_command(self) -> None:
         """Handle the clear command."""
@@ -123,3 +136,46 @@ class TerminalController:
     def get_next_command(self) -> Optional[str]:
         """Get the next command from history."""
         return self.history.get_next()
+
+    def set_auth_state_callback(self, callback: Callable[[bool], None]) -> None:
+        """Set callback for authentication state changes."""
+        self._auth_state_callback = callback
+
+
+    def login(self) -> None:
+        """Execute kiro-cli login command."""
+        def handle_result(result: CommandResult):
+            # After login attempt, update state
+            # If no error, login was successful or already logged in
+            is_logged_in = "error" not in result.stdout.lower() and "error" not in result.stderr.lower()
+            self._is_logged_in = is_logged_in
+            if self._auth_state_callback:
+                self._auth_state_callback(is_logged_in)
+
+        # REMOVE when the bug for kiro-cli is fixed for this version of linux.
+        # Kiro fails the login process when "kiro-cli login" opens a new browser window.
+        # Therefore open a new window beforehand and wait for it to complete.
+        webbrowser.open("https://www.google.com")
+
+        login_command = Command(
+            text="kiro-cli login",
+            working_directory=self._cwd
+        )
+        self._executor.execute(login_command, handle_result)
+
+
+
+    def logout(self) -> None:
+        """Execute kiro-cli logout command."""
+        def handle_result(result: CommandResult):
+            # After logout, user should not be logged in
+            self._is_logged_in = False
+            if self._auth_state_callback:
+                self._auth_state_callback(False)
+
+        # Use execute() with a Command object for raw kiro-cli logout command
+        logout_command = Command(
+            text="kiro-cli logout",
+            working_directory=self._cwd
+        )
+        self._executor.execute(logout_command, handle_result)
