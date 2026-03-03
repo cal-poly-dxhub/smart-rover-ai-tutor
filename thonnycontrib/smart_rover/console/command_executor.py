@@ -13,6 +13,7 @@ class CommandExecutor:
     def __init__(self):
         """Initialize the command executor."""
         self._is_executing = False
+        self._current_process = None
 
     @property
     def is_executing(self) -> bool:
@@ -40,36 +41,48 @@ class CommandExecutor:
 
         def run_command():
             try:
-                result = subprocess.run(
+                # Use Popen instead of run for process control
+                self._current_process = subprocess.Popen(
                     command.text,
                     shell=True,
                     executable=ExecutionConfig.SHELL_EXECUTABLE,
-                    capture_output=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                     text=True,
-                    cwd=command.working_directory,
-                    timeout=ExecutionConfig.TIMEOUT_SECONDS
+                    cwd=command.working_directory
                 )
 
-                command_result = CommandResult(
-                    stdout=result.stdout,
-                    stderr=result.stderr,
-                    return_code=result.returncode,
-                    success=(result.returncode == 0)
-                )
+                try:
+                    # Wait for completion with timeout
+                    stdout, stderr = self._current_process.communicate(
+                        timeout=ExecutionConfig.TIMEOUT_SECONDS
+                    )
 
-                callback(command_result)
+                    command_result = CommandResult(
+                        stdout=stdout,
+                        stderr=stderr,
+                        return_code=self._current_process.returncode,
+                        success=(self._current_process.returncode == 0)
+                    )
 
-            except subprocess.TimeoutExpired:
-                callback(CommandResult(
-                    success=False,
-                    error_message=f"Command timed out ({ExecutionConfig.TIMEOUT_SECONDS} seconds)"
-                ))
+                    callback(command_result)
+
+                except subprocess.TimeoutExpired:
+                    # Kill the process on timeout
+                    self._current_process.kill()
+                    self._current_process.communicate()  # Clean up zombie
+                    callback(CommandResult(
+                        success=False,
+                        error_message=f"Command timed out ({ExecutionConfig.TIMEOUT_SECONDS} seconds)"
+                    ))
+
             except Exception as e:
                 callback(CommandResult(
                     success=False,
                     error_message=f"Error executing command: {str(e)}"
                 ))
             finally:
+                self._current_process = None
                 self._is_executing = False
 
         threading.Thread(target=run_command, daemon=True).start()
@@ -97,3 +110,22 @@ class CommandExecutor:
 
         # Delegate to generic execute() method
         self.execute(wrapped_command, callback)
+
+    def terminate_current(self) -> None:
+        """Terminate the currently running command if any.
+
+        This immediately kills the subprocess and resets execution state.
+        Used when the reset button is clicked to cancel login/logout operations.
+        """
+        if self._current_process and self._current_process.poll() is None:
+            # Process is still running, kill it immediately
+            try:
+                self._current_process.kill()
+                self._current_process.wait(timeout=1.0)  # Wait for cleanup
+            except Exception:
+                pass  # Process may have already terminated
+            finally:
+                self._current_process = None
+
+        # Reset execution state regardless of process state
+        self._is_executing = False

@@ -125,7 +125,11 @@ class TerminalController:
         self._schedule(update_ui)
 
     def reset(self) -> None:
-        """Reset the terminal state and re-enable auth button."""
+        """Reset the terminal state, cancel any running command, and re-enable auth button."""
+        # Terminate any running command (login/logout/chat)
+        self._executor.terminate_current()
+
+        # Reset terminal state
         self._is_first_command = True
         self._animation_stop()
 
