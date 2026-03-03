@@ -125,9 +125,13 @@ class TerminalController:
         self._schedule(update_ui)
 
     def reset(self) -> None:
-        """Reset the terminal state."""
+        """Reset the terminal state and re-enable auth button."""
         self._is_first_command = True
         self._animation_stop()
+
+        # Re-enable auth button with current state
+        if self._auth_state_callback:
+            self._auth_state_callback(self._is_logged_in)
 
     def get_previous_command(self) -> Optional[str]:
         """Get the previous command from history."""
