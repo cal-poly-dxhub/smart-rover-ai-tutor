@@ -146,8 +146,8 @@ class TerminalController:
         """Execute kiro-cli login command."""
         def handle_result(result: CommandResult):
             # After login attempt, update state
-            # If no error, login was successful or already logged in
-            is_logged_in = "error" not in result.stdout.lower() and "error" not in result.stderr.lower()
+            # Check if output contains "Signed in" to confirm successful login
+            is_logged_in = "signed in" in result.stdout.lower() or "signed in" in result.stderr.lower()
             self._is_logged_in = is_logged_in
             if self._auth_state_callback:
                 self._auth_state_callback(is_logged_in)
