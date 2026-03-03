@@ -125,9 +125,17 @@ class TerminalController:
         self._schedule(update_ui)
 
     def reset(self) -> None:
-        """Reset the terminal state."""
+        """Reset the terminal state, cancel any running command, and re-enable auth button."""
+        # Terminate any running command (login/logout/chat)
+        self._executor.terminate_current()
+
+        # Reset terminal state
         self._is_first_command = True
         self._animation_stop()
+
+        # Re-enable auth button with current state
+        if self._auth_state_callback:
+            self._auth_state_callback(self._is_logged_in)
 
     def get_previous_command(self) -> Optional[str]:
         """Get the previous command from history."""
@@ -146,8 +154,8 @@ class TerminalController:
         """Execute kiro-cli login command."""
         def handle_result(result: CommandResult):
             # After login attempt, update state
-            # If no error, login was successful or already logged in
-            is_logged_in = "error" not in result.stdout.lower() and "error" not in result.stderr.lower()
+            # Check if output contains "Signed in" to confirm successful login
+            is_logged_in = "signed in" in result.stdout.lower() or "signed in" in result.stderr.lower()
             self._is_logged_in = is_logged_in
             if self._auth_state_callback:
                 self._auth_state_callback(is_logged_in)
