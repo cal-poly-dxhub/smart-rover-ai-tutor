@@ -1,7 +1,7 @@
 """Terminal widget for text display and input handling."""
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, Menu
 from typing import Callable, Optional
 from thonnycontrib.smart_rover.utils.ansi_handler import AnsiColorHandler
 from thonnycontrib.smart_rover.utils.loading_animation import LoadingAnimation
@@ -54,6 +54,15 @@ class TerminalWidget(ttk.Frame):
 
         self.scrollbar.config(command=self.terminal.yview)
 
+        # Create context menu
+        self._create_context_menu()
+
+    def _create_context_menu(self):
+        """Create the right-click context menu."""
+        self.context_menu = Menu(self.terminal, tearoff=0)
+        self.context_menu.add_command(label="Copy", command=self._copy_from_menu)
+        self.context_menu.add_command(label="Paste", command=self._paste_from_menu)
+
     def _setup_handlers(self):
         """Setup ANSI handler and loading animation."""
         self.ansi_handler = AnsiColorHandler(self.terminal)
@@ -69,6 +78,9 @@ class TerminalWidget(ttk.Frame):
         self.terminal.bind("<Up>", self._on_up_key)
         self.terminal.bind("<Down>", self._on_down_key)
         self.terminal.bind("<KeyPress>", self._on_key_press)
+        self.terminal.bind("<Control-c>", self._on_copy)
+        self.terminal.bind("<Control-v>", self._on_paste)
+        self.terminal.bind("<Button-3>", self._on_right_click)
 
     def get_prompt_symbol(self) -> str:
         """Get the colored prompt symbol."""
@@ -192,3 +204,108 @@ class TerminalWidget(ttk.Frame):
             self.clear_current_command()
 
         return "break"
+
+    def _on_copy(self, event):
+        """Handle Ctrl+C for copying selected text."""
+        try:
+            # Check if there's a selection using the "sel" tag
+            selection_ranges = self.terminal.tag_ranges("sel")
+
+            if selection_ranges:
+                # Get the selected text
+                selected_text = self.terminal.get(selection_ranges[0], selection_ranges[1])
+
+                # Copy to clipboard
+                self.terminal.clipboard_clear()
+                self.terminal.clipboard_append(selected_text)
+
+        except tk.TclError:
+            # No selection exists, do nothing
+            pass
+
+        # Always return "break" to prevent default Ctrl+C behavior
+        return "break"
+
+    def _on_paste(self, event):
+        """Handle Ctrl+V for pasting clipboard content."""
+        # Block paste if executing or not logged in
+        if self._is_executing() or not self._is_logged_in():
+            return "break"
+
+        try:
+            # Get clipboard content
+            clipboard_text = self.terminal.clipboard_get()
+
+            if not clipboard_text:
+                return "break"
+
+            # Get current cursor position
+            insert_pos = self.terminal.index("insert")
+            prompt_end_pos = self.terminal.index("prompt_end")
+
+            # Only allow paste after prompt_end
+            if self.terminal.compare(insert_pos, "<", prompt_end_pos):
+                # Move cursor to end if before prompt
+                self.terminal.mark_set("insert", "end")
+
+            # Insert clipboard text at cursor position
+            self.terminal.insert("insert", clipboard_text)
+
+        except tk.TclError:
+            # Clipboard is empty or contains non-text data
+            pass
+
+        return "break"
+
+    def _on_right_click(self, event):
+        """Handle right-click to show context menu."""
+        # Update menu item states based on current conditions
+        self._update_context_menu_state()
+
+        # Show menu at mouse position
+        try:
+            self.context_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.context_menu.grab_release()
+
+        return "break"
+
+    def _update_context_menu_state(self):
+        """Enable/disable context menu items based on current state."""
+        # Check if there's a selection for Copy
+        try:
+            selection_ranges = self.terminal.tag_ranges("sel")
+            has_selection = len(selection_ranges) > 0
+        except tk.TclError:
+            has_selection = False
+
+        # Enable Copy only if text is selected
+        if has_selection:
+            self.context_menu.entryconfig("Copy", state="normal")
+        else:
+            self.context_menu.entryconfig("Copy", state="disabled")
+
+        # Enable Paste only if logged in and not executing
+        if self._is_logged_in() and not self._is_executing():
+            # Also check if clipboard has content
+            try:
+                clipboard_content = self.terminal.clipboard_get()
+                if clipboard_content:
+                    self.context_menu.entryconfig("Paste", state="normal")
+                else:
+                    self.context_menu.entryconfig("Paste", state="disabled")
+            except tk.TclError:
+                # Clipboard is empty
+                self.context_menu.entryconfig("Paste", state="disabled")
+        else:
+            self.context_menu.entryconfig("Paste", state="disabled")
+
+    def _copy_from_menu(self):
+        """Copy selected text when triggered from context menu."""
+        # Simulate Ctrl+C event
+        self._on_copy(None)
+
+    def _paste_from_menu(self):
+        """Paste clipboard content when triggered from context menu."""
+        # Simulate Ctrl+V event
+        self._on_paste(None)
