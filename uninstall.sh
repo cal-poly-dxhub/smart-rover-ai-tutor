@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Smart Rover AI Tutor - Uninstallation Script for Linux ARM64 (Debian)
+# Smart Rover AI Tutor - Uninstallation Script for Linux ARM (Debian)
 # This script removes kiro-cli, configuration files, and the Thonny plugin
 
 set +e  # Continue on errors
@@ -40,21 +40,7 @@ print_not_found() {
     ITEMS_NOT_FOUND=$((ITEMS_NOT_FOUND + 1))
 }
 
-# Step 1: Check system architecture
-check_architecture() {
-    print_step "Checking system architecture..."
-    ARCH=$(uname -m)
-    if [[ "$ARCH" == "aarch64" ]] || [[ "$ARCH" == "arm64" ]]; then
-        print_success "Detected ARM64 architecture: $ARCH"
-        return 0
-    else
-        print_warning "Expected ARM64 architecture, but detected: $ARCH"
-        print_warning "Continuing anyway - uninstallation should work on any architecture"
-        return 0
-    fi
-}
-
-# Step 2: Check for Debian-based system
+# Step 1: Check for Debian-based system
 check_debian() {
     print_step "Checking for Debian-based system..."
     if command -v dpkg >/dev/null 2>&1; then
@@ -276,7 +262,7 @@ cleanup_empty_dirs() {
 # Main uninstallation flow
 main() {
     echo "╔════════════════════════════════════════════════════════════════╗"
-    echo "║  Smart Rover AI Tutor - Linux ARM64 Uninstallation Script     ║"
+    echo "║  Smart Rover AI Tutor - Linux ARM Uninstallation Script        ║"
     echo "╚════════════════════════════════════════════════════════════════╝"
     echo ""
     echo "This will remove:"
@@ -294,7 +280,6 @@ main() {
         exit 0
     fi
 
-    check_architecture
     check_debian
     uninstall_kiro_cli
     remove_kiro_directory

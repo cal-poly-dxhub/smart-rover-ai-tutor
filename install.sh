@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Smart Rover AI Tutor - Installation Script for Linux ARM64 (Debian)
+# Smart Rover AI Tutor - Installation Script for Linux ARM (Debian)
 # This script installs kiro-cli, copies configuration files, and sets up the Thonny plugin
 
 set +e  # Continue on errors
@@ -32,21 +32,7 @@ print_warning() {
     echo -e "${YELLOW}⚠${NC} $1"
 }
 
-# Step 1: Check system architecture
-check_architecture() {
-    print_step "Checking system architecture..."
-    ARCH=$(uname -m)
-    if [[ "$ARCH" == "aarch64" ]] || [[ "$ARCH" == "arm64" ]]; then
-        print_success "Detected ARM64 architecture: $ARCH"
-        return 0
-    else
-        print_warning "Expected ARM64 architecture, but detected: $ARCH"
-        print_warning "Installation may not work correctly on this system"
-        return 0
-    fi
-}
-
-# Step 2: Check for Debian-based system
+# Step 1: Check for Debian-based system
 check_debian() {
     print_step "Checking for Debian-based system..."
     if command -v dpkg >/dev/null 2>&1; then
@@ -355,11 +341,10 @@ configure_kiro_cli() {
 # Main installation flow
 main() {
     echo "╔════════════════════════════════════════════════════════════════╗"
-    echo "║  Smart Rover AI Tutor - Linux ARM64 Installation Script        ║"
+    echo "║  Smart Rover AI Tutor - Linux ARM Installation Script           ║"
     echo "╚════════════════════════════════════════════════════════════════╝"
     echo ""
 
-    check_architecture
     check_debian
     check_prerequisites
     install_kiro_cli
