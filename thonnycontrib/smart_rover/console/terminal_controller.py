@@ -163,7 +163,7 @@ class TerminalController:
         # REMOVE when the bug for kiro-cli is fixed for this version of linux.
         # Kiro fails the login process when "kiro-cli login" opens a new browser window.
         # Therefore open a new window beforehand and wait for it to complete.
-        webbrowser.open("https://www.google.com")
+        webbrowser.open("https://aws.amazon.com/documentation-overview/kiro/")
 
         login_command = Command(
             text="kiro-cli login",
