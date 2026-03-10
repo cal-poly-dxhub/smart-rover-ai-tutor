@@ -70,17 +70,32 @@ check_prerequisites() {
 
 # Step 3: Install or update kiro-cli
 install_kiro_cli() {
-    print_step "Installing kiro-cli..."
+    print_step "Checking for kiro-cli installation..."
 
     # Check if kiro-cli is already installed
-    IS_INSTALLED=false
-    OLD_VERSION="none"
     if command -v kiro-cli >/dev/null 2>&1; then
-        IS_INSTALLED=true
         OLD_VERSION=$(kiro-cli --version 2>/dev/null || echo "unknown")
-        print_warning "kiro-cli is already installed (version: $OLD_VERSION)"
-        print_step "Updating to latest version..."
+        print_success "kiro-cli is already installed (version: $OLD_VERSION)"
+        print_step "Running kiro-cli update..."
+
+        if kiro-cli update; then
+            NEW_VERSION=$(kiro-cli --version 2>/dev/null || echo "unknown")
+            if [[ "$OLD_VERSION" == "$NEW_VERSION" ]]; then
+                print_success "kiro-cli is up to date (version: $NEW_VERSION)"
+            else
+                print_success "kiro-cli updated: $OLD_VERSION → $NEW_VERSION"
+            fi
+        else
+            print_warning "kiro-cli update failed, continuing with existing version"
+        fi
+
+        # Export PATH to ensure kiro-cli remains accessible
+        export PATH="$HOME/.local/bin:$PATH"
+
+        return 0
     fi
+
+    print_step "Installing kiro-cli..."
 
     # Create temporary directory for download and extraction
     TEMP_DIR=$(mktemp -d)
@@ -152,15 +167,7 @@ install_kiro_cli() {
 
     if command -v kiro-cli >/dev/null 2>&1; then
         NEW_VERSION=$(kiro-cli --version 2>/dev/null || echo "installed")
-        if [[ "$IS_INSTALLED" == true ]]; then
-            if [[ "$OLD_VERSION" == "$NEW_VERSION" ]]; then
-                print_success "kiro-cli is up to date (version: $NEW_VERSION)"
-            else
-                print_success "kiro-cli updated: $OLD_VERSION → $NEW_VERSION"
-            fi
-        else
-            print_success "kiro-cli successfully installed (version: $NEW_VERSION)"
-        fi
+        print_success "kiro-cli successfully installed (version: $NEW_VERSION)"
 
         print_warning "Note: You may need to restart your terminal or run 'source ~/.bashrc' for kiro-cli to be available"
 
