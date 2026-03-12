@@ -269,45 +269,45 @@ copy_thonnycontrib() {
         fi
     done
 
-    # Ensure Python 3.11 is always installed (even if directory didn't exist)
-    PYTHON_311_DIR="$THONNY_LIB_DIR/python3.11/site-packages"
-    PYTHON_311_DEST="$PYTHON_311_DIR/thonnycontrib"
+    # Ensure Python 3.13 is always installed (even if directory didn't exist)
+    PYTHON_313_DIR="$THONNY_LIB_DIR/python3.13/site-packages"
+    PYTHON_313_DEST="$PYTHON_313_DIR/thonnycontrib"
 
-    # Check if we already installed to 3.11 in the loop above
-    ALREADY_INSTALLED_311=false
+    # Check if we already installed to 3.13 in the loop above
+    ALREADY_INSTALLED_313=false
     for installed_ver in "${INSTALLED_VERSIONS[@]}"; do
-        if [[ "$installed_ver" == "3.11" ]]; then
-            ALREADY_INSTALLED_311=true
+        if [[ "$installed_ver" == "3.13" ]]; then
+            ALREADY_INSTALLED_313=true
             break
         fi
     done
 
-    if [[ "$ALREADY_INSTALLED_311" == false ]]; then
-        print_step "Ensuring Python 3.11 installation (guaranteed)..."
+    if [[ "$ALREADY_INSTALLED_313" == false ]]; then
+        print_step "Ensuring Python 3.13 installation (guaranteed)..."
 
         # Create directory structure if it doesn't exist
-        mkdir -p "$PYTHON_311_DIR"
+        mkdir -p "$PYTHON_313_DIR"
 
         # Remove existing destination if it exists
-        if [[ -d "$PYTHON_311_DEST" ]]; then
-            print_warning "Removing existing thonnycontrib for Python 3.11"
-            rm -rf "$PYTHON_311_DEST"
+        if [[ -d "$PYTHON_313_DEST" ]]; then
+            print_warning "Removing existing thonnycontrib for Python 3.13"
+            rm -rf "$PYTHON_313_DEST"
         fi
 
         # Copy directory
-        if cp -r "$SOURCE_DIR" "$PYTHON_311_DEST"; then
-            FILE_COUNT=$(find "$PYTHON_311_DEST" -type f -name "*.py" | wc -l)
+        if cp -r "$SOURCE_DIR" "$PYTHON_313_DEST"; then
+            FILE_COUNT=$(find "$PYTHON_313_DEST" -type f -name "*.py" | wc -l)
 
             # Verify key files exist
-            if [[ -f "$PYTHON_311_DEST/smart_rover/__init__.py" ]]; then
-                print_success "Installed to Python 3.11 [guaranteed] ($FILE_COUNT .py files)"
+            if [[ -f "$PYTHON_313_DEST/smart_rover/__init__.py" ]]; then
+                print_success "Installed to Python 3.13 [guaranteed] ($FILE_COUNT .py files)"
                 INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
-                INSTALLED_VERSIONS+=("3.11")
+                INSTALLED_VERSIONS+=("3.13")
             else
-                print_error "Plugin entry point missing after copy to Python 3.11"
+                print_error "Plugin entry point missing after copy to Python 3.13"
             fi
         else
-            print_error "Failed to copy to Python 3.11"
+            print_error "Failed to copy to Python 3.13"
         fi
     fi
 
